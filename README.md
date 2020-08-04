@@ -1,13 +1,13 @@
-# overlayRoot.sh
+# `overlayRoot.sh`
 Squash File System over OverlayFS
 
 Forked from: https://wiki.psuter.ch/doku.php?id=solve_raspbian_sd_card_corruption_issues_with_read-only_mounted_root_partition
 
 # Installation
 1. Copy this script to **/sbin/**
-    - I should copy to **/home/user** folder by:
+    - I should copy from my computer to Raspberry **/home/user** path runing:
         ```
-        scp -r /overlayRoot_path user@ip_address:/destination_path
+        sudo scp -r /overlayRoot_path user@ip_address:/destination_path
         ```
     - After copy the script, simply move to **/sbin** path runing:
         ```
