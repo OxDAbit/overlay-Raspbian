@@ -66,11 +66,11 @@ sudo apt-get install squashfs-tools -y
 First of all, copy **cmdline-no_overlay.txt** and *+cmdline-overlay.txt** into **/boot/** path.
 
 After runing the script **/boot/** partition is mounted as a RW. To Enable or Disable OverlayFS:
-- Enable OverlayFS:
+- **Enable** OverlayFS:
     ``` 
     cp /boot/cmdline-overlay.txt /boot/cmdline.txt
     ```
-- Disable OverlayFS:
+- **Disable** OverlayFS:
     ```
     cp  /boot/cmdline-no_overlay.txt /boot/cmdline.txt
     ```
