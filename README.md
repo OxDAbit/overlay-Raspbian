@@ -3,9 +3,6 @@ Squash File System over OverlayFS
 
 Forked from: https://wiki.psuter.ch/doku.php?id=solve_raspbian_sd_card_corruption_issues_with_read-only_mounted_root_partition
 
-# What is a OverlayFS
-![overlay](/overlayRoot.sh/img/structure.jpeg)
-
 # Folder structure
 **NOTE:** _This script has been tested with Raspbian OS (32-bit) Lite (Debian Buster)_
 
