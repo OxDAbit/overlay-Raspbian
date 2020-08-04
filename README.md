@@ -173,13 +173,13 @@ Update squashs file adding or removing some file. To do that:
     ```
 
 # What does it actually do
-The script will mount a SquashFS in OverlayFS over the original root file system using tmpfs as upper layer.
-1. Get all useful rootfs information from `/etc/fstab`.
-2. Mount a tmpfs at `/mnt/overlay`, create `/mnt/overlay/upper`, `/mnt/overlay/work`, `/mnt/overlay/newroot`.
-3. Bind mount rootfs to `/mnt/lower`.
-4. Mount OverlayFS using `/mnt/lower` as lower, `/mnt/overlay/upper` and `/mnt/overlay/work` as upper and work directory, `/mnt/overlay/newroot` as merged destination.
-5. `pivot_root` to `/mnt/overlay/newroot` and put old root to `/mnt`.
-6. Move mount point `/mnt/mnt/lower`(the original `/mnt/lower`) to `/lower`, `/mnt/mnt/overlay`(the original `/mnt/overlay`) to `/overlay`.
-7. Move all other useful virtual filesystems like procfs or devfs to new root.
-8. Unmount `/mnt`(the original root file system).
-9. Exec `/sbin/init` and continue the init process.
+~~The script will mount a SquashFS in OverlayFS over the original root file system using tmpfs as upper layer.~~
+~~1. Get all useful rootfs information from `/etc/fstab`.~~
+~~2. Mount a tmpfs at `/mnt/overlay`, create `/mnt/overlay/upper`, `/mnt/overlay/work`, `/mnt/overlay/newroot`.~~
+~~3. Bind mount rootfs to `/mnt/lower`.~~
+~~4. Mount OverlayFS using `/mnt/lower` as lower, `/mnt/overlay/upper` and `/mnt/overlay/work` as upper and work directory, `/mnt/overlay/newroot` as merged destination.~~
+~~5. `pivot_root` to `/mnt/overlay/newroot` and put old root to `/mnt`.~~
+~~6. Move mount point `/mnt/mnt/lower`(the original `/mnt/lower`) to `/lower`, `/mnt/mnt/overlay`(the original `/mnt/overlay`) to `/overlay`.~~
+~~7. Move all other useful virtual filesystems like procfs or devfs to new root.~~
+~~8. Unmount `/mnt`(the original root file system).~~
+~~9. Exec `/sbin/init` and continue the init process.~~
