@@ -47,7 +47,16 @@ sudo apt-get install squashfs-tools -y
     ```
     chmod +x /sbin/overlayRoot.sh
     ```
-3. Change your boot parameter in **/boot/cmdline.txt**. Adding `init=/sbin/overlayRoot.sh`:
+3. Disable **swap**
+    ```
+    sudo -s
+    dphys-swapfile swapoff
+    dphys-swapfile uninstall
+    update-rc.d dphys-swapfile remove
+    systemctl stop dphys-swapfile
+    systemctl disable dphys-swapfile
+    ```
+4. Change your boot parameter in **/boot/cmdline.txt**. Adding `init=/sbin/overlayRoot.sh`:
     - **cmdline.txt** with OverlayFS
     ```
     console=serial0,115200 console=tty1 root=PARTUUID=97652995-02 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait init=/sbin/overlayRoot.sh
@@ -121,11 +130,12 @@ For this example I've created a 3 test files which will be located in **/home** 
     ```
     ls /home
      ├── home_file_01
-     └── home_file_01
+     ├── home_file_02
+     └── other /home files...
 
     ls /etc
      ├── hello_etc
-     └── other /etc files ...
+     └── other /etc files...
     ```
 
 # Update Squash file
@@ -183,3 +193,9 @@ Update squashs file adding or removing some file. To do that:
 ~~7. Move all other useful virtual filesystems like procfs or devfs to new root.~~
 ~~8. Unmount `/mnt`(the original root file system).~~
 ~~9. Exec `/sbin/init` and continue the init process.~~
+
+Contact
+=======
+- Twitter. **@0xDA_bit**
+- Github. **OxDAbit**
+- Mail. **0xdabit@gmail.com**
