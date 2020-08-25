@@ -206,6 +206,6 @@ The other way to modify squashfs:
 
 Contact
 =======
-- Twitter. **@0xDA_bit**
-- Github. **OxDAbit**
+- Twitter. [**@0xDA_bit**](https://twitter.com/0xDA_bit)
+- Github. [**OxDAbit**](https://github.com/OxDAbit)
 - Mail. **0xdabit@gmail.com**
