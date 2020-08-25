@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 #  Read-only SquashFS
-#  Version 1.4
+#  Version 1.2
 #  Script based in Read-only Root-FS for using overlayfs (v1.2)
 #
 #  Version History:
@@ -14,13 +14,12 @@
 #
 #  Created 2017 by Pascal Suter @ DALCO AG, Switzerland to work on Raspian as custom init script
 #  (raspbian does not use an initramfs on boot)
-#  Update 1.4 by OxDAbit@github
 #
 #  0xDA_bit
 #  Date: 07/2020
 #  Mail: 0xdabit@gmail.com
 #  Twitter: @0xDA_bit
-#  Github: OxDAbit@github
+#  Github: OxDAbit
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -133,7 +132,6 @@ fi
 
 mount -o loop -t squashfs /mnt/lower/lib/live/squashfs/file_system.sfs /mnt/squashed
 mount -t overlay -o lowerdir=/mnt/squashed:/mnt/lower,upperdir=/mnt/rw/upper,workdir=/mnt/rw/work overlayfs-root /mnt/newroot
-# mount -t overlay -o lowerdir=/mnt/lower,upperdir=/mnt/rw/upper,workdir=/mnt/rw/work overlayfs-root /mnt/newroot
 if [ $? -ne 0 ]; then
     fail "ERROR: could not mount overlayFS"
 fi

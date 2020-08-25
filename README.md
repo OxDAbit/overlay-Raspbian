@@ -6,34 +6,32 @@ Forked from: https://wiki.psuter.ch/doku.php?id=solve_raspbian_sd_card_corruptio
 # Folder structure
 **NOTE:** _This script has been tested with Raspbian OS (32-bit) Lite (Debian Buster)_
 
-First of all, create the folder structure:
-
+# Installation
+1. First of all, create the folder structure:
+    ```
     /lib/live/
     ├── mounted
     │   ├── ro 							# Where Lower overlay folder is located
     │   ├── rw 							# Where Upper and Work overlay folder is located
     │   └── squashed					# Where .sfs file is unsquashed
     └── squashfs						# Where .sfs file is located
+    ```
 
-To do that:
-```
-sudo -s
-mkdir /lib/live
-mkdir /lib/live/mounted
-mkdir /lib/live/mounted/ro
-mkdir /lib/live/mounted/rw
-mkdir /lib/live/mounted/squashed
-mkdir /lib/live/squahfs
-```
-
-## SquashFS installation
-Install squashfs tools:
-```
-sudo apt-get install squashfs-tools -y 
-```
-
-# Installation
-1. Copy [overlayRoot.sh](https://github.com/OxDAbit/overlayRoot.sh/blob/master/src/overlay_sfs/sbin/overlayRoot.sh) script into **/sbin/**
+    To do that:
+    ```
+    sudo -s
+    mkdir /lib/live
+    mkdir /lib/live/mounted
+    mkdir /lib/live/mounted/ro
+    mkdir /lib/live/mounted/rw
+    mkdir /lib/live/mounted/squashed
+    mkdir /lib/live/squahfs
+    ```
+2. Install Squasfs 
+    ``` 
+    sudo apt-get install squashfs-tools -y 
+    ```
+3. Copy [overlayRoot.sh](https://github.com/OxDAbit/overlayRoot.sh/blob/master/src/overlay_sfs/sbin/overlayRoot.sh) script into **/sbin/**
     - I usually copy from my computer to Raspberry **/home/user** path using:
         ```
         # From computer terminal
@@ -43,13 +41,12 @@ sudo apt-get install squashfs-tools -y
         ```
         sudo mv /home/user/overlayRoot.sh /sbin/
         ```
-2. Make it executable:
+    - Make it executable:
+        ``` 
+        chmod +x /sbin/overlayRoot.sh
+        ```
+4. Disable **swap**
     ```
-    chmod +x /sbin/overlayRoot.sh
-    ```
-3. Disable **swap**
-    ```
-    sudo -s
     dphys-swapfile swapoff
     dphys-swapfile uninstall
     update-rc.d dphys-swapfile remove
@@ -72,7 +69,7 @@ sudo apt-get install squashfs-tools -y
     ```
 
 # Enable / Disable OverlayFS
-First of all, copy **cmdline-no_overlay.txt** and *+cmdline-overlay.txt** into **/boot/** path.
+Copy **cmdline-no_overlay.txt** and **cmdline-overlay.txt** into **/boot/** path.
 
 After runing the script **/boot/** partition is mounted as a RW. To Enable or Disable OverlayFS:
 - **Enable** OverlayFS:
@@ -182,17 +179,17 @@ Update squashs file adding or removing some file. To do that:
     reboot 
     ```
 
-# What does it actually do
-~~The script will mount a SquashFS in OverlayFS over the original root file system using tmpfs as upper layer.~~
-~~1. Get all useful rootfs information from `/etc/fstab`.~~
-~~2. Mount a tmpfs at `/mnt/overlay`, create `/mnt/overlay/upper`, `/mnt/overlay/work`, `/mnt/overlay/newroot`.~~
-~~3. Bind mount rootfs to `/mnt/lower`.~~
-~~4. Mount OverlayFS using `/mnt/lower` as lower, `/mnt/overlay/upper` and `/mnt/overlay/work` as upper and work directory, `/mnt/overlay/newroot` as merged destination.~~
-~~5. `pivot_root` to `/mnt/overlay/newroot` and put old root to `/mnt`.~~
-~~6. Move mount point `/mnt/mnt/lower`(the original `/mnt/lower`) to `/lower`, `/mnt/mnt/overlay`(the original `/mnt/overlay`) to `/overlay`.~~
-~~7. Move all other useful virtual filesystems like procfs or devfs to new root.~~
-~~8. Unmount `/mnt`(the original root file system).~~
-~~9. Exec `/sbin/init` and continue the init process.~~
+The other way to modify squashfs:
+1. Remount RO partition
+    ```
+    sudo -s
+    mount -o remount,rw /lib/live/mounted/ro 
+    ```
+2. Go to **squashfs** folder
+    ```
+    cd /lib/live/mounted/ro/lib/live/squashfs
+    ```
+3. Repeat steps from 3 until 8 indicated in the previous section
 
 Contact
 =======
