@@ -1,12 +1,12 @@
 #!/bin/sh
 #
 #  By: oxdabit
-#  Date: 18/01/2022
+#  Date: 21/12/2023
 #  Mail: 0xdabit@gmail.com
 #  Twitter: @0xDA_bit
 #
 #  Read-only SquashFS
-#  Version 1.8
+#  Version 1.9.0
 #  Script based in Read-only Root-FS for using overlayfs (v1.2)
 #
 #  Version History:
@@ -19,11 +19,11 @@
 #  1.5: 0xDA_bit > Mount SFS firmware and platform in lower side
 #  1.7: 0xDA_bit > Mount SFS as many files as there are in /lib/live/squashfs
 #  1.8: 0xDA_bit > Mount SFS using <prefix-name_vX.Y.Z.sfs> file name structure
-#  Update form 1.2 to 1.8 by OxDAbit
+#  1.9.0: 0xDA_bit > New  script version rules and modify log information
+#  Update form 1.2 to 1.9.0 by OxDAbit
 #
 #  Created 2017 by Pascal Suter @ DALCO AG, Switzerland to work on Raspian as custom init script
 #  (raspbian does not use an initramfs on boot)
-#  Update 1.7 by OxDAbit@github
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -62,19 +62,19 @@ fail(){
 # load module
 modprobe overlay
 if [ $? -ne 0 ]; then
-    fail "ERROR: missing overlay kernel module"
+    fail "[overlayRoot.sh][ERROR] missing overlay kernel module"
 fi
 
 # mount /proc
 mount -t proc proc /proc
 if [ $? -ne 0 ]; then
-    fail "ERROR: could not mount proc"
+    fail "[overlayRoot.sh][ERROR] could not mount proc"
 fi
 
 # create a writable fs to then create our mountpoints
 mount -t tmpfs inittemp /mnt
 if [ $? -ne 0 ]; then
-    fail "ERROR: could not create a temporary filesystem to mount the base filesystems for overlayfs"
+    fail "[overlayRoot.sh][ERROR] could not create a temporary filesystem to mount the base filesystems for overlayfs"
 fi
 
 mkdir /mnt/lower
@@ -82,7 +82,7 @@ mkdir /mnt/rw
 
 mount -t tmpfs root-rw /mnt/rw
 if [ $? -ne 0 ]; then
-    fail "ERROR: could not create tempfs for upper filesystem"
+    fail "[overlayRoot.sh][ERROR] could not create tempfs for upper filesystem"
 fi
 
 mkdir /mnt/rw/upper
@@ -95,19 +95,19 @@ rootDev=`awk '$2 == "/" {print $1}' /etc/fstab`
 rootMountOpt=`awk '$2 == "/" {print $4}' /etc/fstab`
 rootFsType=`awk '$2 == "/" {print $3}' /etc/fstab`
 
-echo "check if we can locate the root device based on fstab"
+echo "[overlayRoot.sh][INFO] check if we can locate the root device based on fstab"
 
 blkid $rootDev
 if [ $? -gt 0 ]; then
-    echo "no success, try if a filesystem with label 'rootfs' is avaialble"
+    echo "[overlayRoot.sh][INFO] no success, try if a filesystem with label 'rootfs' is avaialble"
     rootDevFstab=$rootDev
     rootDev=`blkid -L "rootfs"`
     if [ $? -gt 0 ]; then
-        echo "no luck either, try to further parse fstab's root device definition"
-        echo "try if fstab contains a PARTUUID definition"
+        echo "[overlayRoot.sh][INFO] no luck either, try to further parse fstab's root device definition"
+        echo "[overlayRoot.sh][INFO] try if fstab contains a PARTUUID definition"
         echo "$rootDevFstab" | grep 'PARTUUID=\(.*\)-\([0-9]\{2\}\)'
         if [ $? -gt 0 ]; then
-	    fail "could not find a root filesystem device in fstab. Make sure that fstab contains a device definition or a PARTUUID entry for / or that the root filesystem has a label 'rootfs' assigned to it"
+	    fail "[overlayRoot.sh][ERROR] could not find a root filesystem device in fstab. Make sure that fstab contains a device definition or a PARTUUID entry for / or that the root filesystem has a label 'rootfs' assigned to it"
         fi
         device=""
         partition=""
@@ -115,14 +115,14 @@ if [ $? -gt 0 ]; then
         rootDev=`blkid -t "PTUUID=$device" | awk -F : '{print $1}'`p$(($partition))
         blkid $rootDev
         if [ $? -gt 0 ]; then
-	    fail "The PARTUUID entry in fstab could not be converted into a valid device name. Make sure that fstab contains a device definition or a PARTUUID entry for / or that the root filesystem has a label 'rootfs' assigned to it"
+	    fail "[overlayRoot.sh][ERROR] The PARTUUID entry in fstab could not be converted into a valid device name. Make sure that fstab contains a device definition or a PARTUUID entry for / or that the root filesystem has a label 'rootfs' assigned to it"
         fi
     fi
 fi
 
 mount -t ${rootFsType} -o ${rootMountOpt},ro ${rootDev} /mnt/lower
 if [ $? -ne 0 ]; then
-    fail "ERROR: could not ro-mount original root partition"
+    fail "[overlayRoot.sh][ERROR] could not ro-mount original root partition"
 fi
 
 # Load complete file system path to use in overlay mount process
@@ -140,7 +140,7 @@ do
 		# Check if version is in package name
 		version=`echo $f | grep "_v"`
 		if [ -z $version ]; then
-			echo "\n[WARNING]\tArchivo SFS pero no dispone de versionado"
+			echo "\n[overlayRoot.sh][WARNING] Archivo SFS pero no dispone de versionado"
 		else
 			# Load package version (Ex: v0.4.0)
 			ver=`echo $version | awk -F '_' '{print $2}'`
@@ -176,7 +176,7 @@ done
 # Mount Overlay with squashs file system
 mount -t overlay -o lowerdir=${fspath}:/mnt/lower,upperdir=/mnt/rw/upper,workdir=/mnt/rw/work overlayfs-root /mnt/newroot
 if [ $? -ne 0 ]; then
-    fail "ERROR: could not mount overlayFS"
+    fail "[overlayRoot.sh][ERROR] could not mount overlayFS"
 fi
 
 # remove root mount from fstab (this is already a non-permanent modification)
