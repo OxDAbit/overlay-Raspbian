@@ -1,7 +1,12 @@
 #!/bin/sh
 #
+#  By: oxdabit
+#  Date: 18/01/2022
+#  Mail: 0xdabit@gmail.com
+#  Twitter: @0xDA_bit
+#
 #  Read-only SquashFS
-#  Version 1.2
+#  Version 1.8
 #  Script based in Read-only Root-FS for using overlayfs (v1.2)
 #
 #  Version History:
@@ -10,16 +15,15 @@
 #       (old raspbian), if that is not found, it will look for a partition with LABEL=rootfs, if that
 #       is not found it look for a PARTUUID string in fstab for / and convert that to a device name
 #       using the blkid command.
-#  1.2: 0xDA_bit > Mount SFS File System inside the overlayFS structure
+#  1.4: 0xDA_bit > Mount SFS File System inside the overlayFS structure
+#  1.5: 0xDA_bit > Mount SFS firmware and platform in lower side
+#  1.7: 0xDA_bit > Mount SFS as many files as there are in /lib/live/squashfs
+#  1.8: 0xDA_bit > Mount SFS using <prefix-name_vX.Y.Z.sfs> file name structure
+#  Update form 1.2 to 1.8 by OxDAbit
 #
 #  Created 2017 by Pascal Suter @ DALCO AG, Switzerland to work on Raspian as custom init script
 #  (raspbian does not use an initramfs on boot)
-#
-#  0xDA_bit
-#  Date: 07/2020
-#  Mail: 0xdabit@gmail.com
-#  Twitter: @0xDA_bit
-#  Github: OxDAbit
+#  Update 1.7 by OxDAbit@github
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -35,8 +39,7 @@
 #    along with this program.  If not, see
 #    <http://www.gnu.org/licenses/>.
 #
-#
-#  Tested with Raspbian mini, 2018-10-09
+#  Tested with Raspbian Buster lite
 #
 #  This script will mount the root filesystem read-only and overlay it with a temporary tempfs
 #  which is read-write mounted. This is done using the overlayFS which is part of the linux kernel
@@ -46,18 +49,10 @@
 #  helps to prolong its life and prevent filesystem coruption in environments where the system is usually
 #  not shut down properly
 #
-#  Install:
-#  copy this script to /sbin/overlayRoot.sh, make it executable and add "init=/sbin/overlayRoot.sh" to the
-#  cmdline.txt file in the raspbian image's boot partition.
-#  I strongly recommend to disable swapping before using this. it will work with swap but that just does
-#  not make sens as the swap file will be stored in the tempfs which again resides in the ram.
-#  run these commands on the booted raspberry pi BEFORE you set the init=/sbin/overlayRoot.sh boot option:
-#  sudo dphys-swapfile swapoff
-#  sudo dphys-swapfile uninstall
-#  sudo update-rc.d dphys-swapfile remove
+
 #
-#  To install software, run upgrades and do other changes to the raspberry setup, simply remove the init=
-#  entry from the cmdline.txt file and reboot, make the changes, add the init= entry and reboot once more.
+# Follow installation guide in: https://github.com/OxDAbit/overlayRoot.sh
+#
 
 fail(){
 	echo -e "$1"
@@ -130,8 +125,56 @@ if [ $? -ne 0 ]; then
     fail "ERROR: could not ro-mount original root partition"
 fi
 
-mount -o loop -t squashfs /mnt/lower/lib/live/squashfs/file_system.sfs /mnt/squashed
-mount -t overlay -o lowerdir=/mnt/squashed:/mnt/lower,upperdir=/mnt/rw/upper,workdir=/mnt/rw/work overlayfs-root /mnt/newroot
+# Load complete file system path to use in overlay mount process
+fspath=""
+files=""
+
+for f in `ls /mnt/lower/lib/live/squashfs`;
+do
+	echo "\n-------------- New SFS package -----------------"
+
+	# Working with packages (Ex: 01-firmware_v0.4.0.sfs)
+	# Load package  extension (Ex: sfs)
+	ext="${f##*.}"
+	if [ $ext = "sfs" ]; then
+		# Check if version is in package name
+		version=`echo $f | grep "_v"`
+		if [ -z $version ]; then
+			echo "\n[WARNING]\tArchivo SFS pero no dispone de versionado"
+		else
+			# Load package version (Ex: v0.4.0)
+			ver=`echo $version | awk -F '_' '{print $2}'`
+			ver="${ver%.*}"
+
+			# Load package name (Ex: firmware)
+			name="${f%.*}"
+			name=`echo $name | awk -F '-' '{print $2}'`
+			name="${name%_*}"
+
+			# Load path name (Ex: /mnt/squashed/firmware)
+			s="/mnt/squashed/"$name
+
+			# Load file names in array
+			if [ -n "$fspath" ]; then
+				fspath="$fspath:$s"
+				files="$files:$name"
+			else
+				fspath=$s
+				files=$name
+			fi
+
+			# Create folder for each file
+			mkdir /mnt/squashed/$name
+
+			# Mount file in its path
+			mount -o loop -t squashfs /mnt/lower/lib/live/squashfs/${f} /mnt/squashed/${name}
+		fi
+	fi
+	echo "------------------------------------------------"
+done
+
+# Mount Overlay with squashs file system
+mount -t overlay -o lowerdir=${fspath}:/mnt/lower,upperdir=/mnt/rw/upper,workdir=/mnt/rw/work overlayfs-root /mnt/newroot
 if [ $? -ne 0 ]; then
     fail "ERROR: could not mount overlayFS"
 fi
@@ -149,16 +192,10 @@ cd /mnt/newroot
 pivot_root . mnt
 exec chroot . sh -c "$(cat <<END
 
-# move ro and rw mounts to the new root
-mount --move /mnt/mnt/squashed /lib/live/mounted/squashed
-if [ $? -ne 0 ]; then
-    echo "ERROR: could not move squashed into newroot"
-    /bin/bash
-else
-    echo "SQUASHED folder succesfully mounted"
-fi
+# Move SFS mounts to the new root
+/bin/sh /sbin/overlaySFS.sh -f $files
 
-# move ro and rw mounts to the new root
+# Move RO and RW mounts to the new root
 mount --move /mnt/mnt/lower/ /lib/live/mounted/ro
 if [ $? -ne 0 ]; then
     echo "ERROR: could not move ro-root into newroot"
@@ -180,9 +217,11 @@ umount /mnt/mnt
 umount /mnt/proc
 umount /mnt/dev
 umount /mnt
-umount /lib/live/mounted/squashed
+
+/bin/sh /sbin/overlaySFS.sh -u $files
 
 # continue with regular init
 exec /sbin/init
+
 END
 )"
